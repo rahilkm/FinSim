@@ -31,14 +31,25 @@ export default function ShockSimulator() {
     const [result, setResult] = useState(null);
 
     const [form, setForm] = useState({
-        shock_type: 'job_loss',
+        selected_shocks: ['job_loss'],
         shock_duration_months: '6',
-        income_loss_percent: '50',
+        income_loss_percent: '',
         unexpected_expense: '',
-        market_drop_percent: '0',
+        market_drop_percent: '',
     });
 
     const set = (k, v) => setForm((prev) => ({ ...prev, [k]: v }));
+
+    const toggleShock = (shockValue) => {
+        setForm((prev) => {
+            const current = prev.selected_shocks || [];
+            if (current.includes(shockValue)) {
+                return { ...prev, selected_shocks: current.filter(s => s !== shockValue) };
+            } else {
+                return { ...prev, selected_shocks: [...current, shockValue] };
+            }
+        });
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -146,6 +157,11 @@ export default function ShockSimulator() {
         }
     };
 
+    const showIncomeLoss = form.selected_shocks.includes('job_loss');
+    const showMarketDrop = form.selected_shocks.includes('market_crash');
+    const showUnexpectedExpense = form.selected_shocks.includes('medical_emergency') || form.selected_shocks.includes('inflation_spike');
+    const showParameters = form.selected_shocks.length > 0;
+
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 max-w-6xl mx-auto">
             {/* Page Header */}
@@ -167,76 +183,93 @@ export default function ShockSimulator() {
                     <div>
                         <h3 className="text-base font-bold text-[var(--color-text)] mb-4 flex items-center gap-2">
                             <Icon name="category" className="text-[var(--color-primary)]" size={18} />
-                            Select Shock Type
+                            Select Shock Types
                         </h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {shockTypes.map((type) => (
-                                <label key={type.value} className="cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        name="shock_type"
-                                        value={type.value}
-                                        checked={form.shock_type === type.value}
-                                        onChange={(e) => set('shock_type', e.target.value)}
-                                        className="peer hidden"
-                                    />
-                                    <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-[var(--color-border)] peer-checked:bg-[rgba(34,211,238,0.12)] peer-checked:border-[#22d3ee] transition-all text-[var(--color-text-secondary)] peer-checked:text-[#22d3ee]">
+                            {shockTypes.map((type) => {
+                                const isSelected = form.selected_shocks.includes(type.value);
+                                return (
+                                    <button
+                                        key={type.value}
+                                        type="button"
+                                        onClick={() => toggleShock(type.value)}
+                                        className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${
+                                            isSelected
+                                                ? 'bg-[rgba(34,211,238,0.12)] border-[#22d3ee] text-[#22d3ee]'
+                                                : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]/50'
+                                        }`}
+                                    >
                                         <Icon name={type.icon} size={28} className="mb-2" />
                                         <span className="text-xs font-bold text-center">{type.label}</span>
-                                    </div>
-                                </label>
-                            ))}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
                     {/* Parameters */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-[var(--color-text-secondary)]">Duration: {form.shock_duration_months} months</label>
-                            <input
-                                className="w-full accent-[var(--color-primary)] h-2 bg-[var(--color-border)] rounded-lg appearance-none cursor-pointer"
-                                max="24" min="1" type="range"
-                                value={form.shock_duration_months}
-                                onChange={(e) => set('shock_duration_months', e.target.value)}
-                            />
-                            <div className="flex justify-between text-xs text-[var(--color-text-muted)]">
-                                <span>1 mo</span><span>24 mo</span>
-                            </div>
-                        </div>
-                        <Input
-                            id="shock-income-loss"
-                            label="Income Loss (%)"
-                            type="number"
-                            min="0" max="100" step="1"
-                            value={form.income_loss_percent}
-                            onChange={(e) => set('income_loss_percent', e.target.value)}
-                            suffix="%"
-                        />
-                        <div className="flex flex-col gap-1">
-                            <label className="text-sm font-medium text-[var(--color-text-secondary)]">Unexpected Expense (₹)</label>
-                            <div className="relative flex items-center">
-                                <span className="absolute left-3 text-[var(--color-text-muted)] font-medium select-none">₹</span>
+                    {showParameters ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex flex-col gap-2 md:col-span-2">
+                                <label className="text-sm font-medium text-[var(--color-text-secondary)]">Duration: {form.shock_duration_months} months</label>
                                 <input
-                                    type="number"
-                                    inputMode="numeric"
-                                    className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl pl-8 pr-4 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                    value={form.unexpected_expense}
-                                    onChange={(e) => set('unexpected_expense', e.target.value)}
-                                    placeholder="0"
-                                    min="0"
+                                    className="w-full accent-[var(--color-primary)] h-2 bg-[var(--color-border)] rounded-lg appearance-none cursor-pointer"
+                                    max="24" min="1" type="range"
+                                    value={form.shock_duration_months}
+                                    onChange={(e) => set('shock_duration_months', e.target.value)}
                                 />
+                                <div className="flex justify-between text-xs text-[var(--color-text-muted)]">
+                                    <span>1 mo</span><span>24 mo</span>
+                                </div>
                             </div>
+                            
+                            {showIncomeLoss && (
+                                <Input
+                                    id="shock-income-loss"
+                                    label="Income Loss (%)"
+                                    type="number"
+                                    min="0" max="100" step="1"
+                                    value={form.income_loss_percent}
+                                    onChange={(e) => set('income_loss_percent', e.target.value)}
+                                    suffix="%"
+                                />
+                            )}
+                            
+                            {showUnexpectedExpense && (
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-sm font-medium text-[var(--color-text-secondary)]">Unexpected Expense (₹)</label>
+                                    <div className="relative flex items-center">
+                                        <span className="absolute left-3 text-[var(--color-text-muted)] font-medium select-none">₹</span>
+                                        <input
+                                            type="number"
+                                            inputMode="numeric"
+                                            className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl pl-8 pr-4 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            value={form.unexpected_expense}
+                                            onChange={(e) => set('unexpected_expense', e.target.value)}
+                                            placeholder="0"
+                                            min="0"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {showMarketDrop && (
+                                <Input
+                                    id="shock-market"
+                                    label="Market Drop (%)"
+                                    type="number"
+                                    min="0" max="100" step="1"
+                                    value={form.market_drop_percent}
+                                    onChange={(e) => set('market_drop_percent', e.target.value)}
+                                    suffix="%"
+                                />
+                            )}
                         </div>
-                        <Input
-                            id="shock-market"
-                            label="Market Drop (%)"
-                            type="number"
-                            min="0" max="100" step="1"
-                            value={form.market_drop_percent}
-                            onChange={(e) => set('market_drop_percent', e.target.value)}
-                            suffix="%"
-                        />
-                    </div>
+                    ) : (
+                        <div className="text-center p-8 bg-[var(--color-bg)] rounded-xl border border-dashed border-[var(--color-border)]">
+                            <p className="text-[var(--color-text-secondary)]">Select one or more shock types above to configure parameters.</p>
+                        </div>
+                    )}
 
                     <Button type="submit" loading={loading} icon="play_arrow" className="w-full py-4 text-base">
                         RUN SIMULATION

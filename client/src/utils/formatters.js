@@ -13,9 +13,16 @@ export function formatCurrency(value) {
 /**
  * Format decimal as percentage string.
  */
-export function formatPercent(value, decimals = 1) {
+export function formatPercent(value, decimals = 1, cap = true) {
     if (value === null || value === undefined) return '0%';
-    return `${(value * 100).toFixed(decimals)}%`;
+    const percent = value * 100;
+    
+    if (cap) {
+        if (percent > 100) return '> 100%';
+        if (percent < -100) return '< -100%';
+    }
+    
+    return `${percent.toFixed(decimals)}%`;
 }
 
 /**

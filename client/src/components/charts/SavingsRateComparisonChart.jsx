@@ -38,8 +38,12 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 export default function SavingsRateComparisonChart({ rateBefore, rateAfter }) {
-    const before = parseFloat((rateBefore * 100).toFixed(1));
-    const after = parseFloat((rateAfter * 100).toFixed(1));
+    let before = parseFloat((rateBefore * 100).toFixed(1));
+    let after = parseFloat((rateAfter * 100).toFixed(1));
+
+    // Cap values between 0 and 100 so the chart only shows above the X-axis
+    before = Math.max(0, Math.min(100, before));
+    after = Math.max(0, Math.min(100, after));
 
     const data = [
         { name: 'Before', rate: before },
