@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+/* ─── Stitch Design Tokens ──────────────────────── */
+:root {
+  /* Primary — Soft Cyan */
+  --color-primary: #22d3ee;
+  --color-primary-light: #67e8f9;
+  --color-primary-dark: #0891b2;
+
+  /* Accent */
+  --color-accent: #22d3ee;
+  --color-accent-light: #67e8f9;
+
+  /* Surfaces */
+  --color-bg: #0a0a0a;
+  --color-surface: rgba(255, 255, 255, 0.03);
+  --color-surface-hover: rgba(255, 255, 255, 0.04);
+  --color-border: rgba(255, 255, 255, 0.08);
+
+  /* Text */
+  --color-text: #ffffff;
+  --color-text-secondary: #9ca3af;
+  --color-text-muted: #6b7280;
+
+  /* Status */
+  --color-success: #22d3ee;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #22d3ee;
+
+  /* Shadows - subtle border-based depth */
+  --shadow-sm: inset 0 1px 0 rgba(255, 255, 255, 0.05); /* removing old heavy outer shadows, strict flat aesthetic */
+  --shadow-md: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-glow: 0 0 20px rgba(34, 211, 238, 0.03);
+
+  /* Layout */
+  --sidebar-width: 256px;
+  --sidebar-collapsed: 0px;
+  --navbar-height: 64px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+}
+
+/* Single Dark Theme Enforced (No .dark block) */
+
+/* ─── Base Styles ───────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--color-bg) !important;
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Typography ────────────────────────────────── */
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text);
+}
+
+/* Navbar Fixes */
+.navbar-wrapper {
+  width: 100%;
+}
+
+.navbar {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+
+  border-radius: 12px;   /* KEEP curves */
+
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: none;
+
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: all 0.3s ease-in-out;
+}
+
+.main-content {
+  margin-top: 64px;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Scrollbar Styling ─────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(34, 211, 238, 0.2);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 211, 238, 0.4);
+}
+
+/* ─── Glass Panel Utility ──────────────────────── */
+.glass-panel {
+  background: var(--color-surface);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+
+
+.dark .glass-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+/* ─── Material Symbols size helpers ────────────── */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ─── Auth Page Input Overrides ────────────────── */
+.auth-page-wrapper input:-webkit-autofill,
+.auth-page-wrapper input:-webkit-autofill:hover,
+.auth-page-wrapper input:-webkit-autofill:focus,
+.auth-page-wrapper input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset !important;
+  -webkit-text-fill-color: var(--color-text) !important;
+  background-color: #0a0a0a !important;
+  color: var(--color-text) !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
