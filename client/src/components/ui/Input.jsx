@@ -14,7 +14,7 @@ export default function Input({ label, id, error, className = '', prefix, suffix
                 )}
                 <input
                     id={id}
-                    className={`w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl py-3 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all group-hover:border-[var(--color-primary)]/40 ${prefix ? 'pl-10 pr-4' : suffix ? 'pl-4 pr-10' : 'px-4'
+                    className={`w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl py-3 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all group-hover:border-[var(--color-primary)]/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${prefix ? 'pl-10 pr-4' : suffix ? 'pl-4 pr-10' : 'px-4'
                         } ${error ? 'border-[var(--color-danger)]' : ''}`}
                     {...props}
                 />

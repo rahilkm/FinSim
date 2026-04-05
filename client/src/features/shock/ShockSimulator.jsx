@@ -35,6 +35,7 @@ export default function ShockSimulator() {
         shock_duration_months: '6',
         income_loss_percent: '',
         unexpected_expense: '',
+        expense_increase_percent: '',
         market_drop_percent: '',
     });
 
@@ -74,10 +75,13 @@ export default function ShockSimulator() {
             const duration = Number(form.shock_duration_months) || 1;
             const incomeLoss = Number(form.income_loss_percent) || 0;
             const unexpectedExpense = Number(form.unexpected_expense) || 0;
+            const expenseIncrease = Number(form.expense_increase_percent) || 0;
             const marketDrop = Number(form.market_drop_percent) || 0;
 
             const incomeAfter = income * (1 - (incomeLoss / 100));
-            const totalExpenses = expenses + emi + unexpectedExpense;
+            const baseExpenses = expenses + emi;
+            const inflatedExpenses = baseExpenses * (1 + (expenseIncrease / 100));
+            const totalExpenses = inflatedExpenses + unexpectedExpense;
             const monthlyDeficit = totalExpenses - incomeAfter;
 
             let currentSavings = netSavings;
@@ -159,7 +163,8 @@ export default function ShockSimulator() {
 
     const showIncomeLoss = form.selected_shocks.includes('job_loss');
     const showMarketDrop = form.selected_shocks.includes('market_crash');
-    const showUnexpectedExpense = form.selected_shocks.includes('medical_emergency') || form.selected_shocks.includes('inflation_spike');
+    const showUnexpectedExpense = form.selected_shocks.includes('medical_emergency');
+    const showInflationExpense = form.selected_shocks.includes('inflation_spike');
     const showParameters = form.selected_shocks.length > 0;
 
     return (
@@ -236,21 +241,27 @@ export default function ShockSimulator() {
                             )}
                             
                             {showUnexpectedExpense && (
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-sm font-medium text-[var(--color-text-secondary)]">Unexpected Expense (₹)</label>
-                                    <div className="relative flex items-center">
-                                        <span className="absolute left-3 text-[var(--color-text-muted)] font-medium select-none">₹</span>
-                                        <input
-                                            type="number"
-                                            inputMode="numeric"
-                                            className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl pl-8 pr-4 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                            value={form.unexpected_expense}
-                                            onChange={(e) => set('unexpected_expense', e.target.value)}
-                                            placeholder="0"
-                                            min="0"
-                                        />
-                                    </div>
-                                </div>
+                                <Input
+                                    id="shock-unexpected"
+                                    label="Unexpected Expense"
+                                    type="number"
+                                    min="0"
+                                    value={form.unexpected_expense}
+                                    onChange={(e) => set('unexpected_expense', e.target.value)}
+                                    prefix="₹"
+                                />
+                            )}
+                            
+                            {showInflationExpense && (
+                                <Input
+                                    id="shock-inflation"
+                                    label="Expense Increase (%)"
+                                    type="number"
+                                    min="0" step="0.1"
+                                    value={form.expense_increase_percent}
+                                    onChange={(e) => set('expense_increase_percent', e.target.value)}
+                                    suffix="%"
+                                />
                             )}
 
                             {showMarketDrop && (
