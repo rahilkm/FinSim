@@ -14,11 +14,13 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// Handle 401 globally
+// Handle 401 globally (skip auth endpoints — login failures are expected 401s)
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const url = error.config?.url || '';
+        const isAuthRoute = url.includes('/auth/login') || url.includes('/auth/register');
+        if (error.response?.status === 401 && !isAuthRoute) {
             localStorage.removeItem('finsim_token');
             window.location.href = '/auth';
         }

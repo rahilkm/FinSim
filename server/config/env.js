@@ -20,4 +20,6 @@ module.exports = {
     PORT: parseInt(process.env.PORT, 10) || 5000,
     NODE_ENV: process.env.NODE_ENV || 'development',
     CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
+    SMTP_EMAIL: process.env.SMTP_EMAIL || '',
+    SMTP_PASSWORD: process.env.SMTP_PASSWORD || '',
 };

@@ -1,34 +1,20 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
 import { formatCurrency } from '../../utils/formatters';
 
 const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
         const order = ['Before', 'After'];
         const sortedPayload = [...payload].sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
-
+        const accentColor = sortedPayload[0]?.name === 'Before' ? '#22d3ee' : '#ef4444';
         return (
-            <div style={{
-                backgroundColor: '#111827',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px',
-                padding: '12px',
-                color: '#ffffff',
-                fontSize: '13px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-            }}>
-                <p style={{ fontWeight: 'bold', marginBottom: '8px', color: '#ffffff' }}>{label}</p>
-                {sortedPayload.map((entry, index) => (
-                    <div key={`item-${index}`} style={{ display: 'flex', alignItems: 'center', padding: '3px 0' }}>
-                        <span style={{
-                            display: 'inline-block',
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: entry.color,
-                            marginRight: '8px'
-                        }}></span>
-                        <span style={{ color: '#ffffff', marginRight: '4px' }}>{entry.name}:</span>
-                        <span style={{ color: '#ffffff', fontWeight: 'bold' }}>{formatCurrency(entry.value)}</span>
+            <div className="bg-[var(--color-surface)] border border-[var(--color-border)] p-4 rounded-2xl shadow-2xl flex flex-col gap-1 min-w-[160px] relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1" style={{ background: 'linear-gradient(90deg, #22d3ee, #ef4444)' }} />
+                <p className="text-[10px] font-extrabold text-[var(--color-text-muted)] uppercase tracking-widest mb-1">{label}</p>
+                {sortedPayload.map((entry) => (
+                    <div key={entry.name} className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: entry.name === 'Before' ? '#22d3ee' : '#ef4444' }} />
+                        <span className="text-[var(--color-text-secondary)] text-xs font-bold">{entry.name}:</span>
+                        <span className="text-[var(--color-text)] text-sm font-black tracking-tight">{formatCurrency(entry.value)}</span>
                     </div>
                 ))}
             </div>
@@ -39,52 +25,74 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function FinancialImpactBarChart({ savingsBefore, savingsAfter, investmentsBefore, investmentsAfter, netWorthBefore, netWorthAfter }) {
     const data = [
-        { 
-            name: 'Savings', 
-            Before: Math.max(savingsBefore, 0), 
-            After: Math.max(savingsAfter, 0) 
-        },
-        { 
-            name: 'Investments', 
-            Before: Math.max(investmentsBefore, 0), 
-            After: Math.max(investmentsAfter, 0) 
-        },
-        { 
-            name: 'Net Worth', 
-            Before: Math.max(netWorthBefore, 0), 
-            After: Math.max(netWorthAfter, 0) 
-        },
+        { name: 'Savings',     Before: Math.max(savingsBefore, 0),     After: Math.max(savingsAfter, 0) },
+        { name: 'Investments', Before: Math.max(investmentsBefore, 0), After: Math.max(investmentsAfter, 0) },
+        { name: 'Net Worth',   Before: Math.max(netWorthBefore, 0),    After: Math.max(netWorthAfter, 0) },
     ];
 
     return (
-        <div className="glass-panel glow-panel rounded-2xl w-full" style={{ padding: '16px 20px', overflow: 'visible' }}>
-            <h3 className="text-base font-bold text-[var(--color-text)] mb-1">Financial Impact Breakdown</h3>
-            <p className="text-xs text-[var(--color-text-muted)] mb-4">Savings, Investments, and Net Worth before vs. after the shock</p>
-            <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }} barGap={8}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.08)" vertical={false} />
-                    <XAxis 
-                        dataKey="name" 
-                        tick={{ fill: '#e5e7eb', fontSize: 13, fontWeight: 600 }} 
-                        axisLine={{ stroke: 'rgba(255,255,255,0.1)' }} 
-                        tickLine={false} 
+        <div className="glass-panel glow-panel rounded-3xl p-8 relative overflow-hidden">
+            <h3 className="text-xl font-black text-[var(--color-text)] mb-1 tracking-tight">Financial Impact Breakdown</h3>
+            <p className="text-xs text-[var(--color-text-muted)] mb-8">Savings, Investments, and Net Worth before vs. after the shock</p>
+
+            <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={data} barCategoryGap="25%" barGap={6} margin={{ top: 35, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                        <linearGradient id="gradBefore" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#22d3ee" stopOpacity={1} />
+                            <stop offset="95%" stopColor="#0891b2" stopOpacity={0.7} />
+                        </linearGradient>
+                        <linearGradient id="gradAfter" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#ef4444" stopOpacity={1} />
+                            <stop offset="95%" stopColor="#b91c1c" stopOpacity={0.7} />
+                        </linearGradient>
+                    </defs>
+
+                    <CartesianGrid strokeDasharray="4 4" stroke="var(--color-border)" vertical={false} opacity={0.5} />
+
+                    <XAxis
+                        dataKey="name"
+                        stroke="var(--color-text-muted)"
+                        tick={{ fontSize: 12, fill: 'var(--color-text-secondary)', fontWeight: 700 }}
+                        axisLine={false}
+                        tickLine={false}
+                        dy={10}
                     />
-                    <YAxis 
-                        tickFormatter={(v) => `₹${(v / 100000).toFixed(1)}L`} 
-                        tick={{ fill: '#9ca3af', fontSize: 12 }} 
-                        axisLine={false} 
-                        tickLine={false} 
+
+                    <YAxis
+                        stroke="var(--color-text-muted)"
+                        tick={{ fontSize: 11, fill: 'var(--color-text-muted)', fontWeight: 600 }}
+                        tickFormatter={(v) => v === 0 ? '0' : `₹${(v / 100000).toFixed(1)}L`}
+                        axisLine={false}
+                        tickLine={false}
                     />
-                    <Tooltip 
-                        content={<CustomTooltip />}
-                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-surface-hover)', opacity: 0.5, rx: 12 }} offset={60} />
+
+                    <Legend
+                        wrapperStyle={{ fontSize: '12px', paddingTop: '20px', fontWeight: 700, color: 'var(--color-text-secondary)' }}
+                        iconType="circle"
                     />
-                    <Legend 
-                        wrapperStyle={{ fontSize: '12px', paddingTop: '10px', fontWeight: 500, color: '#e5e7eb' }} 
-                        iconType="circle" 
-                    />
-                    <Bar dataKey="Before" fill="#22d3ee" radius={[6, 6, 0, 0]} maxBarSize={60} activeBar={{ filter: 'brightness(1.2)' }} />
-                    <Bar dataKey="After" fill="#ef4444" radius={[6, 6, 0, 0]} maxBarSize={60} activeBar={{ filter: 'brightness(1.2)' }} />
+
+                    <Bar dataKey="Before" fill="url(#gradBefore)" radius={[8, 8, 8, 8]} maxBarSize={50}>
+                        <LabelList
+                            dataKey="Before"
+                            position="top"
+                            formatter={(val) => val > 0 ? (val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${(val / 1000).toFixed(0)}k`) : ''}
+                            style={{ fill: 'var(--color-text-secondary)', fontSize: 11, fontWeight: 800 }}
+                            offset={10}
+                        />
+                    </Bar>
+
+                    <Bar dataKey="After" fill="url(#gradAfter)" radius={[8, 8, 8, 8]} maxBarSize={50}>
+                        <LabelList
+                            dataKey="After"
+                            position="top"
+                            formatter={(val) => val > 0 ? (val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${(val / 1000).toFixed(0)}k`) : ''}
+                            style={{ fill: 'var(--color-text-secondary)', fontSize: 11, fontWeight: 800 }}
+                            offset={10}
+                        />
+                    </Bar>
                 </BarChart>
             </ResponsiveContainer>
         </div>

@@ -9,7 +9,7 @@ A MERN-stack personal finance simulation platform.
 - MongoDB Atlas account (or local MongoDB)
 
 ### 1. Environment Setup
-```bash
+```
 cp .env.example .env
 # Edit .env with your MONGO_URI and JWT_SECRET
 ```

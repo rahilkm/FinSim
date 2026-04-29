@@ -23,7 +23,7 @@ function analyzeResilience(profile) {
     // Core metrics
     const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0) + Number(existing_emi || 0);
     const totalSavings = Number(savings || 0) + assets.reduce((sum, a) => sum + Number(a.value), 0);
-    
+
     let emergency_months = totalExpenses > 0 ? totalSavings / totalExpenses : 0;
     if (!totalSavings || totalSavings === 0) {
         emergency_months = 0;
@@ -38,24 +38,50 @@ function analyzeResilience(profile) {
     const net_worth = (total_assets || 0) - (total_liabilities || 0);
 
     // Component scores (0–100)
+    // Emergency fund: full score at 6+ months of expenses
     const emergencyFundScore = Math.min(emergency_months / 6, 1) * 100;
+
+    // Debt score: 0% DTI = 100, 50%+ DTI = 0
     const debtScore = Math.max(1 - debt_to_income, 0) * 100;
+
+    // Savings score: 25%+ savings rate = 100
     const savingsScore = Math.min(Math.max(savings_rate, 0) / 0.25, 1) * 100;
 
-    // Composite: 40% emergency + 30% debt + 30% savings
+    // Net worth score: negative net worth is penalised
+    // Positive: scaled against 12× monthly income (a healthy benchmark)
+    // Negative: capped at 0, with penalty proportional to how negative it is
+    let netWorthScore;
+    if (net_worth >= 0) {
+        const benchmark = (monthly_income || 1) * 12;
+        netWorthScore = Math.min(net_worth / benchmark, 1) * 100;
+    } else {
+        // Negative net worth: penalty — deeper the hole, lower the score
+        const maxPenaltyDepth = (monthly_income || 1) * 12;
+        netWorthScore = Math.max(0, (1 - Math.abs(net_worth) / maxPenaltyDepth)) * 50; // capped at 50 when deeply negative
+    }
+
+    // Income stability: based on expense-to-income ratio (lower is better)
+    const expenseRatio = monthly_income > 0 ? totalExpenses / monthly_income : 1;
+    const incomeStabilityScore = Math.max(1 - expenseRatio, 0) * 100;
+
+    // Composite: 30% emergency + 25% debt + 25% savings + 15% net worth + 5% income stability
     const financial_health_score = Math.round(
-        0.4 * emergencyFundScore + 0.3 * debtScore + 0.3 * savingsScore
+        0.30 * emergencyFundScore +
+        0.25 * debtScore +
+        0.25 * savingsScore +
+        0.15 * netWorthScore +
+        0.05 * incomeStabilityScore
     );
 
     const risk = riskLevel(financial_health_score);
 
-    // Radar chart data strictly formatted per requirements
+    // Radar chart data — all real computed values
     const radar_data = [
-        { subject: 'Savings Strength', value: Math.round(savingsScore) },
-        { subject: 'Debt Burden',      value: Math.round(debtScore) },
-        { subject: 'Emergency Buffer', value: Math.round(emergencyFundScore) },
-        { subject: 'Income Stability', value: 80 },
-        { subject: 'Net Worth Growth', value: 70 },
+        { subject: 'Savings Strength',  value: Math.round(savingsScore) },
+        { subject: 'Debt Burden',       value: Math.round(debtScore) },
+        { subject: 'Emergency Buffer',  value: Math.round(emergencyFundScore) },
+        { subject: 'Income Stability',  value: Math.round(incomeStabilityScore) },
+        { subject: 'Net Worth Growth',  value: Math.round(netWorthScore) },
     ];
 
     // Asset allocation for pie chart
@@ -75,6 +101,8 @@ function analyzeResilience(profile) {
         emergency_fund_score: Math.round(emergencyFundScore),
         debt_score: Math.round(debtScore),
         savings_score: Math.round(savingsScore),
+        net_worth_score: Math.round(netWorthScore),
+        income_stability_score: Math.round(incomeStabilityScore),
         radar_data,
         asset_allocation,
     };

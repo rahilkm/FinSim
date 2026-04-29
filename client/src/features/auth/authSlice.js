@@ -5,6 +5,7 @@ export const registerUser = createAsyncThunk('auth/register', async ({ full_name
     try {
         const { data } = await api.post('/auth/register', { full_name, email, password });
         localStorage.setItem('finsim_token', data.token);
+        if (data.full_name) localStorage.setItem('userName', data.full_name);
         return data;
     } catch (err) {
         return rejectWithValue(err.response?.data?.message || 'Registration failed');
@@ -15,9 +16,11 @@ export const loginUser = createAsyncThunk('auth/login', async ({ email, password
     try {
         const { data } = await api.post('/auth/login', { email, password });
         localStorage.setItem('finsim_token', data.token);
+        if (data.full_name) localStorage.setItem('userName', data.full_name);
         return data;
     } catch (err) {
-        return rejectWithValue(err.response?.data?.message || 'Login failed');
+        const errData = err.response?.data;
+        return rejectWithValue(errData || { message: 'Login failed' });
     }
 });
 

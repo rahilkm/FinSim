@@ -10,7 +10,7 @@ import HealthRadarChart from '../../components/charts/HealthRadarChart';
 import Button from '../../components/ui/Button';
 import useAuth from '../../hooks/useAuth';
 import useFinancialMetrics from '../../hooks/useFinancialMetrics';
-import { formatCurrency, formatPercent } from '../../utils/formatters';
+import { formatCurrency, formatPercent, formatEmergencyMonths } from '../../utils/formatters';
 
 export default function FinancialOverview() {
     useAuth();
@@ -35,7 +35,9 @@ export default function FinancialOverview() {
         recommendations,
         savingsScore,
         debtScore,
-        emergencyFundScore
+        emergencyFundScore,
+        netWorthScore,
+        incomeStabilityScore,
     } = useFinancialMetrics();
 
     if (loading && !hasProfile) {
@@ -52,10 +54,11 @@ export default function FinancialOverview() {
 
 
     const dimensions = [
-        { label: 'Income Stability', value: Math.round((savingsScore || 0) * 0.85) },
-        { label: 'Savings Strength', value: savingsScore || 0 },
-        { label: 'Debt Management', value: debtScore || 0 },
-        { label: 'Emergency Buffer', value: emergencyFundScore || 0 },
+        { label: 'Income Stability',  value: incomeStabilityScore || 0 },
+        { label: 'Savings Strength',  value: savingsScore || 0 },
+        { label: 'Debt Management',   value: debtScore || 0 },
+        { label: 'Emergency Buffer',  value: emergencyFundScore || 0 },
+        { label: 'Net Worth Growth',  value: netWorthScore || 0 },
     ];
 
     return (
@@ -82,7 +85,7 @@ export default function FinancialOverview() {
                 />
                 <Card
                     title="Emergency Fund"
-                    value={`${Number.isInteger(emergencyMonths) ? emergencyMonths : emergencyMonths.toFixed(1)} mo`}
+                    value={formatEmergencyMonths(emergencyMonths, true)}
                 />
                 <Card
                     title="Debt-to-Income"

@@ -8,7 +8,7 @@ import SavingsLineChart from '../../components/charts/SavingsLineChart';
 import FinancialImpactBarChart from '../../components/charts/FinancialImpactBarChart';
 import RecommendationList from '../../components/recommendations/RecommendationList';
 import useAuth from '../../hooks/useAuth';
-import { formatCurrency, formatPercent } from '../../utils/formatters';
+import { formatCurrency, formatPercent, formatEmergencyMonths } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 
 const shockTypes = [
@@ -64,13 +64,12 @@ export default function ShockSimulator() {
             const emi = profile?.existing_emi || 0;
 
             const income = incomeSources.reduce((s, i) => s + (Number(i.amount) || 0), 0);
-            const expenses = expensesList.reduce((s, ex) => s + (Number(ex.amount) || 0), 0);
-            const savings = Number(profile?.savings) || 0;
+            const monthlyExpenses = expensesList.reduce((s, ex) => s + (Number(ex.amount) || 0), 0);
+            const liquidSavings = Number(profile?.savings) || 0;  // cash in savings accounts
             const investments = Number(profile?.investments) || 0;
+            const totalAssets = assetsList.reduce((s, a) => s + (Number(a.value) || 0), 0);
             const liabilitiesTotal = liabilitiesList.reduce((s, l) => s + (Number(l.value) || 0), 0);
-
-            let netSavings = savings - liabilitiesTotal;
-            if (netSavings < 0) netSavings = 0;
+            const monthlyOutgo = monthlyExpenses + emi; // regular fixed monthly outgo
 
             const duration = Number(form.shock_duration_months) || 1;
             const incomeLoss = Number(form.income_loss_percent) || 0;
@@ -79,73 +78,66 @@ export default function ShockSimulator() {
             const marketDrop = Number(form.market_drop_percent) || 0;
 
             const incomeAfter = income * (1 - (incomeLoss / 100));
-            const baseExpenses = expenses + emi;
-            const inflatedExpenses = baseExpenses * (1 + (expenseIncrease / 100));
-            const totalExpenses = inflatedExpenses + unexpectedExpense;
-            const monthlyDeficit = totalExpenses - incomeAfter;
+            const inflatedExpenses = monthlyOutgo * (1 + (expenseIncrease / 100));
+            const totalMonthlyExpenses = inflatedExpenses; // ongoing monthly cost
+            const monthlyNet = incomeAfter - totalMonthlyExpenses;
 
-            let currentSavings = netSavings;
+            // Savings drains over time based on monthly net; one-time expense hits immediately
+            let currentSavings = liquidSavings - unexpectedExpense;
+            if (currentSavings < 0) currentSavings = 0;
+
             const savings_timeline = [];
-            
             savings_timeline.push({ month: 0, savings: currentSavings });
 
             for (let i = 0; i < duration; i++) {
-                if (monthlyDeficit > 0) {
-                    currentSavings -= monthlyDeficit;
-                }
+                currentSavings += monthlyNet; // monthlyNet is negative when spending > income
                 if (currentSavings < 0) currentSavings = 0;
-                
-                savings_timeline.push({ month: i + 1, savings: currentSavings });
+                savings_timeline.push({ month: i + 1, savings: Math.round(currentSavings) });
             }
 
             const investmentsAfter = investments * (1 - (marketDrop / 100));
 
-            console.log({
-                duration,
-                monthlyDeficit,
-                initialSavings: netSavings,
-                finalSavings: currentSavings,
-                investments,
-                investmentsAfter
-            });
-
-            let emergencyMonths = totalExpenses === 0 ? 0 : (currentSavings / totalExpenses);
-            let emergencyMonthsBefore = totalExpenses === 0 ? 0 : (netSavings / totalExpenses);
+            // Emergency months: how long can liquid savings cover monthly outgo
+            const emergencyMonthsBefore = monthlyOutgo > 0 ? liquidSavings / monthlyOutgo : 0;
+            const emergencyMonthsAfter = totalMonthlyExpenses > 0 ? currentSavings / totalMonthlyExpenses : 0;
 
             let risk_level = 'Stable';
-            if (emergencyMonths < 3) risk_level = 'Critical';
-            else if (emergencyMonths >= 3 && emergencyMonths < 6) risk_level = 'Risk';
-            else if (emergencyMonths >= 6) risk_level = 'Strong';
+            if (emergencyMonthsAfter < 3) risk_level = 'Critical';
+            else if (emergencyMonthsAfter >= 3 && emergencyMonthsAfter < 6) risk_level = 'Risk';
+            else if (emergencyMonthsAfter >= 6) risk_level = 'Strong';
 
             const recommendations = [];
             if (currentSavings === 0) {
                 recommendations.push({ text: 'Your savings will be fully depleted within the shock duration', type: 'savings' });
-            } else if (currentSavings < netSavings) {
+            } else if (currentSavings < liquidSavings) {
                 recommendations.push({ text: 'Your net savings are projected to decline during this shock period', type: 'savings' });
             } else {
                 recommendations.push({ text: 'Your savings continue to grow or remain stable despite the shock', type: 'savings' });
             }
-            if (emergencyMonths < 3) {
+            if (emergencyMonthsAfter < 3) {
                 recommendations.push({ text: 'Your emergency fund falls below safe levels, indicating high financial vulnerability', type: 'savings' });
-            } else if (emergencyMonths >= 6) {
+            } else if (emergencyMonthsAfter >= 6) {
                 recommendations.push({ text: 'Your emergency fund remains strong despite the shock', type: 'savings' });
             }
             if (incomeLoss > 0) recommendations.push({ text: 'Your income reduction significantly impacts your monthly cash flow', type: 'expense' });
+            if (unexpectedExpense > 0) recommendations.push({ text: 'Unexpected expenses increase your financial burden during this period', type: 'expense' });
             if (marketDrop > 0) recommendations.push({ text: 'Your investments decline due to market conditions, reducing overall net worth', type: 'investment' });
 
-            const netWorthBefore = netSavings + investments;
-            const netWorthAfter = currentSavings + investmentsAfter;
+            // Net worth uses total assets (adjusted) minus liabilities
+            const assetsAfter = (totalAssets - liquidSavings - investments) + currentSavings + investmentsAfter;
+            const netWorthBefore = totalAssets - liabilitiesTotal;
+            const netWorthAfter = assetsAfter - liabilitiesTotal;
 
             setResult({
                 updated_income: incomeAfter,
                 remaining_savings: currentSavings,
-                emergency_months_before: emergencyMonthsBefore,
-                emergency_months_after: emergencyMonths,
+                emergency_months_before: parseFloat(emergencyMonthsBefore.toFixed(1)),
+                emergency_months_after: parseFloat(emergencyMonthsAfter.toFixed(1)),
                 risk_level: risk_level,
                 savings_timeline,
                 recommendations,
 
-                savings_baseline: netSavings,
+                savings_baseline: liquidSavings,
                 investments_baseline: investments,
                 new_investments: investmentsAfter,
                 net_worth_before: netWorthBefore,
@@ -183,6 +175,8 @@ export default function ShockSimulator() {
             {/* Simulation Setup */}
             <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Inputs Card */}
+
+
                 <form onSubmit={handleSubmit} className="lg:col-span-8 glass-panel p-6 rounded-2xl flex flex-col gap-8">
                     {/* Shock Type Selection */}
                     <div>
@@ -198,11 +192,10 @@ export default function ShockSimulator() {
                                         key={type.value}
                                         type="button"
                                         onClick={() => toggleShock(type.value)}
-                                        className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${
-                                            isSelected
-                                                ? 'bg-[rgba(34,211,238,0.12)] border-[#22d3ee] text-[#22d3ee]'
-                                                : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]/50'
-                                        }`}
+                                        className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isSelected
+                                            ? 'bg-[rgba(34,211,238,0.12)] border-[#22d3ee] text-[#22d3ee]'
+                                            : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]/50'
+                                            }`}
                                     >
                                         <Icon name={type.icon} size={28} className="mb-2" />
                                         <span className="text-xs font-bold text-center">{type.label}</span>
@@ -227,7 +220,7 @@ export default function ShockSimulator() {
                                     <span>1 mo</span><span>24 mo</span>
                                 </div>
                             </div>
-                            
+
                             {showIncomeLoss && (
                                 <Input
                                     id="shock-income-loss"
@@ -239,7 +232,7 @@ export default function ShockSimulator() {
                                     suffix="%"
                                 />
                             )}
-                            
+
                             {showUnexpectedExpense && (
                                 <Input
                                     id="shock-unexpected"
@@ -251,7 +244,7 @@ export default function ShockSimulator() {
                                     prefix="₹"
                                 />
                             )}
-                            
+
                             {showInflationExpense && (
                                 <Input
                                     id="shock-inflation"
@@ -304,13 +297,13 @@ export default function ShockSimulator() {
                     <div className="glass-panel p-5 rounded-2xl">
                         <p className="text-[var(--color-text-secondary)] text-sm font-medium mb-1">Emergency Fund — Before</p>
                         <h4 className="text-2xl font-black text-[var(--color-text)]">
-                            {result ? `${result.emergency_months_before.toFixed(1)} months` : '—'}
+                            {result ? formatEmergencyMonths(result.emergency_months_before) : '—'}
                         </h4>
                     </div>
                     <div className="glass-panel p-5 rounded-2xl">
                         <p className="text-[var(--color-text-secondary)] text-sm font-medium mb-1">Emergency Fund — After</p>
                         <h4 className="text-2xl font-black" style={{ color: result ? (riskColor[result.risk_level] || '#f59e0b') : 'var(--color-text-muted)' }}>
-                            {result ? `${result.emergency_months_after.toFixed(1)} months` : '—'}
+                            {result ? formatEmergencyMonths(result.emergency_months_after) : '—'}
                         </h4>
                     </div>
                     <div

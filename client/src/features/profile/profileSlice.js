@@ -35,7 +35,7 @@ const profileSlice = createSlice({
             .addCase(fetchProfile.fulfilled, (state, action) => { state.loading = false; state.data = action.payload; })
             .addCase(fetchProfile.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
             .addCase(saveProfile.pending, (state) => { state.loading = true; state.error = null; })
-            .addCase(saveProfile.fulfilled, (state) => { state.loading = false; /* do NOT overwrite state.data — form owns its state after initial load */ })
+            .addCase(saveProfile.fulfilled, (state, action) => { state.loading = false; if (state.data) { state.data.updated_at = action.payload.updated_at; } else { state.data = action.payload; } })
             .addCase(saveProfile.rejected, (state, action) => { state.loading = false; state.error = action.payload; });
     },
 });

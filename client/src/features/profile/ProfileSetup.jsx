@@ -153,8 +153,9 @@ export default function ProfileSetup() {
                 if (parsed.fullName) setFullName(parsed.fullName);
                 setEmail(parsed.email || user?.email || "");
             } catch (e) {}
-        } else if (user?.email) {
-            setEmail(user.email);
+        } else if (user) {
+            setEmail(user.email || '');
+            if (user.full_name) setFullName(user.full_name);
         }
         dispatch(fetchProfile()); 
     }, [dispatch, user]);
@@ -402,9 +403,33 @@ export default function ProfileSetup() {
 
                 {/* Footer Actions */}
                 <div className="pt-10 flex flex-col md:flex-row gap-4 items-center justify-between border-t border-[var(--color-border)]">
-                    <div className="flex items-center gap-3 text-[var(--color-text-muted)] italic text-sm">
-                        <Icon name="verified" className="text-[var(--color-primary)]" size={16} />
-                        <span>Your financial data is stored securely.</span>
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-3 text-[var(--color-text-muted)] italic text-sm">
+                            <Icon name="verified" className="text-[var(--color-primary)]" size={16} />
+                            <span>Your financial data is stored securely.</span>
+                        </div>
+                        {profile?.updated_at && (
+                            <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+                                <Icon name="schedule" size={14} />
+                                <span>
+                                    Last updated on{' '}
+                                    <span className="font-medium text-[var(--color-text-secondary)]">
+                                        {new Date(profile.updated_at).toLocaleDateString('en-IN', {
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric',
+                                        })}
+                                    </span>
+                                    {' at '}
+                                    <span className="font-medium text-[var(--color-text-secondary)]">
+                                        {new Date(profile.updated_at).toLocaleTimeString('en-IN', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                        })}
+                                    </span>
+                                </span>
+                            </div>
+                        )}
                     </div>
                     <div className="flex gap-3">
                         <Button variant="secondary" type="button" onClick={(e) => handleSave(e)} loading={loading}>

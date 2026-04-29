@@ -243,10 +243,7 @@ export default function DecisionSimulator() {
 
                                 {/* 3 Charts per spec */}
                                 <IncomeAllocationChart
-                                    expenses={Math.max(
-                                        (result.monthly_income || 0) - result.total_emi - Math.max(result.disposable_income_after, 0),
-                                        0
-                                    )}
+                                    expenses={result.monthly_expenses || 0}
                                     emi={result.total_emi}
                                     savings={Math.max(result.disposable_income_after, 0)}
                                 />

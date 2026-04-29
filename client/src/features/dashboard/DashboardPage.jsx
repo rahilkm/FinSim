@@ -10,7 +10,7 @@ import Skeleton from '../../components/ui/Skeleton';
 import ExpenseBarChart from '../../components/charts/ExpenseBarChart';
 import AssetPieChart from '../../components/charts/AssetPieChart';
 import useAuth from '../../hooks/useAuth';
-import { formatCurrency, formatPercent } from '../../utils/formatters';
+import { formatCurrency, formatPercent, formatEmergencyMonths } from '../../utils/formatters';
 
 export default function DashboardPage() {
     useAuth();
@@ -84,7 +84,7 @@ export default function DashboardPage() {
                 />
                 <Card
                     title="Emergency Fund"
-                    value={`${Number.isInteger(emergencyMonths) ? emergencyMonths : emergencyMonths.toFixed(1)} mo`}
+                    value={formatEmergencyMonths(emergencyMonths, true)}
                     trendDirection={emergencyMonths >= 6 ? 'up' : emergencyMonths >= 3 ? 'neutral' : 'down'}
                 />
                 <Card

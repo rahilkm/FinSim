@@ -21,10 +21,17 @@ const errorHandler = (err, req, res, _next) => {
     }
 
     const statusCode = err.statusCode || 500;
-    res.status(statusCode).json({
+    const response = {
         error: true,
         message: statusCode === 500 ? 'Internal server error' : err.message,
-    });
+    };
+
+    // Include lockout metadata for rate-limited login attempts
+    if (err.lockout != null) response.lockout = err.lockout;
+    if (err.lockoutSeconds != null) response.lockoutSeconds = err.lockoutSeconds;
+    if (err.attemptsLeft != null) response.attemptsLeft = err.attemptsLeft;
+
+    res.status(statusCode).json(response);
 };
 
 module.exports = errorHandler;

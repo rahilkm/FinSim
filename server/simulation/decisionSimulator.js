@@ -47,9 +47,13 @@ function simulateDecision(profile, params) {
     const debt_ratio_before = debtToIncomeRatio(existing_emi, monthly_income);
     const debt_ratio_after = debtToIncomeRatio(total_emi, monthly_income);
 
-    // Net worth before/after per spec: new_net_worth = (total_assets + purchase_cost) - total_liabilities
+    // Net worth before/after
     const net_worth_before = total_assets - total_liabilities;
-    const new_net_worth = (total_assets + purchase_cost) - total_liabilities;
+    // Buying an asset converts cash (down_payment) and adds debt (loan_amount) to acquire the asset (purchase_cost).
+    // Day 1 Net Worth remains identical mathematically, but we calculate it explicitly for correctness.
+    const updated_assets = total_assets + purchase_cost - down_payment;
+    const updated_liabilities = total_liabilities + loan_amount;
+    const new_net_worth = updated_assets - updated_liabilities;
     const net_worth_after = new_net_worth;
 
     // Financial stress level
@@ -113,8 +117,9 @@ function simulateDecision(profile, params) {
         financial_stress_level,
         emi_timeline,
 
-        // For recommendation engine
+        // For recommendation engine and UI charts
         monthly_income,
+        monthly_expenses,
         savings_rate: parseFloat(savings_rate_after.toFixed(3)),
     };
 }

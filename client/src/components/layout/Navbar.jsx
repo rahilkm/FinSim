@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Icon from '../ui/Icon';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,6 +9,34 @@ export default function Navbar({ onMenuClick }) {
     const location = useLocation();
 
     const [isCollapsed, setIsCollapsed] = useState(false);
+
+    // Compute display name and email from all available sources
+    const computeUserInfo = useCallback(() => {
+        const profile = JSON.parse(localStorage.getItem("userProfile") || "{}");
+        const name =
+            localStorage.getItem("userName") ||
+            profile.fullName ||
+            user?.full_name ||
+            "User";
+        const email =
+            profile.email ||
+            user?.email ||
+            "";
+        return { name, email };
+    }, [user]);
+
+    const [userInfo, setUserInfo] = useState(() => computeUserInfo());
+
+    // Re-compute when Redux user changes or on custom 'userUpdated' event
+    useEffect(() => {
+        setUserInfo(computeUserInfo());
+    }, [computeUserInfo]);
+
+    useEffect(() => {
+        const handleUserUpdated = () => setUserInfo(computeUserInfo());
+        window.addEventListener("userUpdated", handleUserUpdated);
+        return () => window.removeEventListener("userUpdated", handleUserUpdated);
+    }, [computeUserInfo]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -21,18 +49,8 @@ export default function Navbar({ onMenuClick }) {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    const profile = JSON.parse(localStorage.getItem("userProfile") || "{}");
-
-    const userName =
-        localStorage.getItem("userName") ||
-        profile.fullName ||
-        user?.name ||
-        "User";
-
-    const userEmail =
-        profile.email ||
-        user?.email ||
-        "";
+    const userName = userInfo.name;
+    const userEmail = userInfo.email;
 
     const getPageTitle = () => {
         const path = location.pathname;

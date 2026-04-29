@@ -140,6 +140,18 @@ function generateRecommendations(metrics) {
         }
     }
 
+    // 4. Net Worth Rule
+    if (metrics.net_worth !== undefined) {
+        const nw = metrics.net_worth;
+        if (nw < 0) {
+            recs.push({ text: 'Your net worth is negative — your liabilities exceed your assets. Prioritize paying down debt to move toward positive net worth.', type: 'debt' });
+        } else if (nw === 0) {
+            recs.push({ text: 'Your net worth is at break-even. Focus on growing assets and reducing liabilities to build long-term wealth.', type: 'investment' });
+        } else if (nw > 0 && nw < (metrics.monthly_income || 0) * 6) {
+            recs.push({ text: 'Your net worth is positive but still growing. Continue building assets and reducing outstanding liabilities.', type: 'investment' });
+        }
+    }
+
     return recs;
 }
 

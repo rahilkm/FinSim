@@ -1,35 +1,15 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 import { formatCurrency } from '../../utils/formatters';
 
-const CustomTooltip = ({ active, payload }) => {
+const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-        const order = ['EMI', 'Expenses', 'Savings'];
-        const sortedPayload = [...payload].sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
-
         return (
-            <div style={{
-                backgroundColor: '#111827',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px',
-                padding: '12px',
-                color: '#ffffff',
-                fontSize: '13px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-            }}>
-                {sortedPayload.map((entry, index) => (
-                    <div key={`item-${index}`} style={{ display: 'flex', alignItems: 'center', padding: '3px 0' }}>
-                        <span style={{
-                            display: 'inline-block',
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: entry.color,
-                            marginRight: '8px'
-                        }}></span>
-                        <span style={{ color: '#ffffff', marginRight: '4px' }}>{entry.name}:</span>
-                        <span style={{ color: '#ffffff', fontWeight: 'bold' }}>{formatCurrency(entry.value)}</span>
-                    </div>
-                ))}
+            <div className="bg-[var(--color-surface)]/90 backdrop-blur-md border border-[var(--color-border)] p-4 rounded-2xl shadow-2xl flex flex-col gap-1 min-w-[150px] relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1" style={{ background: payload[0].payload.strokeColor }} />
+                <p className="text-[10px] font-extrabold text-[var(--color-text-muted)] uppercase tracking-widest">{label}</p>
+                <p className="text-xl font-black text-[var(--color-text)] tracking-tight">
+                    {formatCurrency(payload[0].value)}
+                </p>
             </div>
         );
     }
@@ -37,32 +17,71 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 export default function IncomeAllocationChart({ expenses, emi, savings }) {
+    const clampedSavings  = Math.max(savings,  0);
+    const clampedEmi      = Math.max(emi,      0);
+    const clampedExpenses = Math.max(expenses, 0);
+
     const data = [
-        {
-            name: 'Monthly Allocation',
-            'Expenses': expenses,
-            'EMI': emi,
-            'Savings': savings,
-        },
+        { name: 'EMI',      amount: clampedEmi,      fill: 'url(#allocEMI)',      strokeColor: '#8b5cf6' },
+        { name: 'Expenses', amount: clampedExpenses,  fill: 'url(#allocExpenses)', strokeColor: '#6b7280' },
+        { name: 'Savings',  amount: clampedSavings,   fill: 'url(#allocSavings)',  strokeColor: '#22d3ee' },
     ];
 
     return (
-        <div className="glass-panel glow-panel p-6 rounded-2xl" style={{ overflow: 'visible' }}>
+        <div className="glass-panel glow-panel p-6 rounded-2xl relative overflow-hidden">
             <h3 className="text-base font-bold text-[var(--color-text)] mb-1">Income Allocation After Decision</h3>
             <p className="text-xs text-[var(--color-text-muted)] mb-4">How your income is distributed after taking this loan</p>
-            <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.08)" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fill: '#e5e7eb', fontSize: 13 }} axisLine={{ stroke: 'rgba(255,255,255,0.1)' }} tickLine={false} />
-                    <YAxis tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} tick={{ fill: '#9ca3af', fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <Tooltip 
-                        content={<CustomTooltip />}
-                        cursor={{ fill: 'transparent' }}
+
+            <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={data} barCategoryGap="25%" margin={{ top: 35, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                        <linearGradient id="allocEMI" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#8b5cf6" stopOpacity={1} />
+                            <stop offset="95%" stopColor="#6d28d9" stopOpacity={0.7} />
+                        </linearGradient>
+                        <linearGradient id="allocExpenses" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#6b7280" stopOpacity={1} />
+                            <stop offset="95%" stopColor="#374151" stopOpacity={0.7} />
+                        </linearGradient>
+                        <linearGradient id="allocSavings" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#22d3ee" stopOpacity={1} />
+                            <stop offset="95%" stopColor="#0891b2" stopOpacity={0.7} />
+                        </linearGradient>
+                    </defs>
+
+                    <CartesianGrid strokeDasharray="4 4" stroke="var(--color-border)" vertical={false} opacity={0.5} />
+
+                    <XAxis
+                        dataKey="name"
+                        stroke="var(--color-text-muted)"
+                        tick={{ fontSize: 12, fill: 'var(--color-text-secondary)', fontWeight: 700 }}
+                        axisLine={false}
+                        tickLine={false}
+                        dy={10}
                     />
-                    <Legend wrapperStyle={{ fontSize: '12px', color: '#e5e7eb' }} />
-                    <Bar dataKey="Expenses" stackId="a" fill="#6b7280" radius={[0, 0, 0, 0]} />
-                    <Bar dataKey="EMI" stackId="a" fill="#8b5cf6" radius={[0, 0, 0, 0]} />
-                    <Bar dataKey="Savings" stackId="a" fill="#22d3ee" radius={[8, 8, 0, 0]} />
+
+                    <YAxis
+                        stroke="var(--color-text-muted)"
+                        tick={{ fontSize: 11, fill: 'var(--color-text-muted)', fontWeight: 600 }}
+                        tickFormatter={(v) => v === 0 ? '0' : `₹${(v / 1000).toFixed(0)}k`}
+                        axisLine={false}
+                        tickLine={false}
+                    />
+
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-surface-hover)', opacity: 0.5, rx: 12 }} />
+
+                    <Bar dataKey="amount" radius={[8, 8, 8, 8]} maxBarSize={60}>
+                        {data.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                        <LabelList
+                            dataKey="amount"
+                            position="top"
+                            formatter={(val) => val > 0 ? `₹${(val / 1000).toFixed(0)}k` : ''}
+                            style={{ fill: 'var(--color-text-secondary)', fontSize: 12, fontWeight: 800 }}
+                            offset={12}
+                        />
+                    </Bar>
                 </BarChart>
             </ResponsiveContainer>
         </div>

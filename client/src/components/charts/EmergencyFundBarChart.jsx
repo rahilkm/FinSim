@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
+import { formatEmergencyMonths } from '../../utils/formatters';
 
 export default function EmergencyFundBarChart({ monthsBefore, monthsAfter }) {
     const data = [
@@ -26,7 +27,7 @@ export default function EmergencyFundBarChart({ monthsBefore, monthsAfter }) {
                     <XAxis type="number" tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} unit=" mo" />
                     <YAxis type="category" dataKey="name" tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} width={90} />
                     <Tooltip
-                        formatter={(v) => [`${v} months`, 'Emergency Coverage']}
+                        formatter={(v) => [formatEmergencyMonths(v), 'Emergency Coverage']}
                         contentStyle={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px' }}
                         labelStyle={{ color: 'var(--color-text)' }}
                     />

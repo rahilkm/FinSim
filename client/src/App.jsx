@@ -1,12 +1,15 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 import AppLayout from './components/layout/AppLayout';
 import AuthPage from './features/auth/AuthPage';
+import ResetPassword from './features/auth/ResetPassword';
 import FinancialOverview from './features/overview/FinancialOverview';
 import ProfileSetup from './features/profile/ProfileSetup';
 import ShockSimulator from './features/shock/ShockSimulator';
 import DecisionSimulator from './features/decision/DecisionSimulator';
+import { fetchMe } from './features/auth/authSlice';
 
 import RequireProfile from './components/layout/RequireProfile';
 
@@ -16,6 +19,16 @@ function PrivateRoute({ children }) {
 }
 
 export default function App() {
+  const dispatch = useDispatch();
+  const { token, user } = useSelector((s) => s.auth);
+
+  // Rehydrate user data from server on page refresh (token survives in localStorage, but Redux state resets)
+  useEffect(() => {
+    if (token && !user) {
+      dispatch(fetchMe());
+    }
+  }, [token, user, dispatch]);
+
   return (
     <BrowserRouter>
       <Toaster
@@ -37,6 +50,7 @@ export default function App() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/login" element={<AuthPage />} />
         <Route path="/register" element={<AuthPage />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected */}
         <Route

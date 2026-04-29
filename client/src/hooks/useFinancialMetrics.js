@@ -61,5 +61,7 @@ export default function useFinancialMetrics() {
         savingsScore: r.savings_score || 0,
         debtScore: r.debt_score || 0,
         emergencyFundScore: r.emergency_fund_score || 0,
+        netWorthScore: r.net_worth_score || 0,
+        incomeStabilityScore: r.income_stability_score || 0,
     };
 }

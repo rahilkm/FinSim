@@ -23,6 +23,26 @@ exports.login = async (req, res, next) => {
     }
 };
 
+exports.forgotPassword = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        const result = await authService.forgotPassword(email);
+        res.json(result);
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.resetPassword = async (req, res, next) => {
+    try {
+        const { token, password } = req.body;
+        const result = await authService.resetPassword(token, password);
+        res.json(result);
+    } catch (err) {
+        next(err);
+    }
+};
+
 exports.getMe = async (req, res, next) => {
     try {
         const user = await authService.getMe(req.user._id);

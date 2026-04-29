@@ -10,7 +10,7 @@ import HealthScoreGauge from '../../components/charts/HealthScoreGauge';
 import HealthRadarChart from '../../components/charts/HealthRadarChart';
 import RecommendationList from '../../components/recommendations/RecommendationList';
 import useAuth from '../../hooks/useAuth';
-import { formatCurrency, formatPercent } from '../../utils/formatters';
+import { formatCurrency, formatPercent, formatEmergencyMonths } from '../../utils/formatters';
 
 export default function ResilienceAnalyzer() {
     useAuth();
@@ -86,7 +86,7 @@ export default function ResilienceAnalyzer() {
                 />
                 <Card
                     title="Emergency Fund"
-                    value={`${result.emergency_months} Months`}
+                    value={formatEmergencyMonths(result.emergency_months, true)}
                     trend={result.emergency_months < 6 ? '-0.1m' : 'Stable'}
                     trendDirection={result.emergency_months < 6 ? 'down' : 'neutral'}
                 />
