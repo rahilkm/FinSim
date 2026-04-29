@@ -1,43 +1,26 @@
-const nodemailer = require('nodemailer');
-const { SMTP_EMAIL, SMTP_PASSWORD, CLIENT_URL } = require('../config/env');
+const { Resend } = require('resend');
+const { SMTP_EMAIL, CLIENT_URL } = require('../config/env');
 
-// Check if SMTP is configured
-const isSmtpConfigured =
-    SMTP_EMAIL &&
-    SMTP_PASSWORD &&
-    SMTP_EMAIL !== 'your_gmail@gmail.com' &&
-    SMTP_PASSWORD !== 'your_gmail_app_password';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 
-// Create reusable transporter (only if configured)
-let transporter = null;
-if (isSmtpConfigured) {
-    transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: SMTP_EMAIL,
-            pass: SMTP_PASSWORD,
-        },
-    });
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
-    // Verify connection on startup
-    transporter.verify()
-        .then(() => console.log('✅  Email service connected (Gmail SMTP)'))
-        .catch((err) => console.warn('⚠️  Email service failed to connect:', err.message));
+if (resend) {
+    console.log('✅  Email service ready (Resend API)');
 } else {
-    console.warn('⚠️  SMTP not configured — reset emails will be logged to console only.');
-    console.warn('   Set SMTP_EMAIL and SMTP_PASSWORD in .env to enable email sending.');
+    console.warn('⚠️  RESEND_API_KEY not set — reset emails will be logged to console only.');
 }
 
 /**
- * Send a password reset email.
- * Falls back to console logging if SMTP is not configured.
+ * Send a password reset email via Resend API.
+ * Falls back to console logging if Resend is not configured.
  */
 async function sendResetEmail(toEmail, resetToken) {
     const resetUrl = `${CLIENT_URL}/reset-password?token=${resetToken}`;
 
-    if (transporter) {
-        const mailOptions = {
-            from: `"FinSim" <${SMTP_EMAIL}>`,
+    if (resend) {
+        const { error } = await resend.emails.send({
+            from: 'FinSim <onboarding@resend.dev>',
             to: toEmail,
             subject: 'FinSim — Password Reset Request',
             html: `
@@ -67,14 +50,18 @@ async function sendResetEmail(toEmail, resetToken) {
                     </div>
                 </div>
             `,
-        };
+        });
 
-        await transporter.sendMail(mailOptions);
+        if (error) {
+            console.error('❌  Resend email error:', error);
+            throw new Error(error.message);
+        }
+
         console.log(`📧  Password reset email sent to ${toEmail}`);
     } else {
         // Fallback: log to console
         console.log('\n══════════════════════════════════════════════════');
-        console.log('📧  PASSWORD RESET LINK (email not configured — console fallback)');
+        console.log('📧  PASSWORD RESET LINK (Resend not configured — console fallback)');
         console.log(`    To: ${toEmail}`);
         console.log(`    ${resetUrl}`);
         console.log('    Token expires in 15 minutes.');

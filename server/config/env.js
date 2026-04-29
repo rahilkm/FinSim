@@ -22,4 +22,5 @@ module.exports = {
     CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
     SMTP_EMAIL: process.env.SMTP_EMAIL || '',
     SMTP_PASSWORD: process.env.SMTP_PASSWORD || '',
+    RESEND_API_KEY: process.env.RESEND_API_KEY || '',
 };
