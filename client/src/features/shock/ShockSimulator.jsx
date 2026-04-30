@@ -61,14 +61,22 @@ export default function ShockSimulator() {
             const expensesList = profile?.expenses || [];
             const assetsList = profile?.assets || [];
             const liabilitiesList = profile?.liabilities || [];
+            
+            const listAssets = assetsList.reduce((s, a) => s + (Number(a.value) || 0), 0);
+            const liabilitiesTotal = liabilitiesList.reduce((s, l) => s + (Number(l.value) || 0), 0) || Number(profile?.total_liabilities) || 0;
+            
             const emi = profile?.existing_emi || 0;
-
             const income = incomeSources.reduce((s, i) => s + (Number(i.amount) || 0), 0);
             const monthlyExpenses = expensesList.reduce((s, ex) => s + (Number(ex.amount) || 0), 0);
             const liquidSavings = Number(profile?.savings) || 0;  // cash in savings accounts
             const investments = Number(profile?.investments) || 0;
-            const totalAssets = assetsList.reduce((s, a) => s + (Number(a.value) || 0), 0);
-            const liabilitiesTotal = liabilitiesList.reduce((s, l) => s + (Number(l.value) || 0), 0);
+
+            // Ensure total assets at least covers the sum of savings and investments if they haven't filled out their asset list
+            let totalAssets = listAssets || Number(profile?.total_assets) || 0;
+            totalAssets = Math.max(totalAssets, liquidSavings + investments);
+            
+            const fixedAssets = totalAssets - liquidSavings - investments;
+
             const monthlyOutgo = monthlyExpenses + emi; // regular fixed monthly outgo
 
             const duration = Number(form.shock_duration_months) || 1;
@@ -124,7 +132,7 @@ export default function ShockSimulator() {
             if (marketDrop > 0) recommendations.push({ text: 'Your investments decline due to market conditions, reducing overall net worth', type: 'investment' });
 
             // Net worth uses total assets (adjusted) minus liabilities
-            const assetsAfter = (totalAssets - liquidSavings - investments) + currentSavings + investmentsAfter;
+            const assetsAfter = fixedAssets + currentSavings + investmentsAfter;
             const netWorthBefore = totalAssets - liabilitiesTotal;
             const netWorthAfter = assetsAfter - liabilitiesTotal;
 

@@ -27,7 +27,7 @@ export default function FinancialImpactBarChart({ savingsBefore, savingsAfter, i
     const data = [
         { name: 'Savings',     Before: Math.max(savingsBefore, 0),     After: Math.max(savingsAfter, 0) },
         { name: 'Investments', Before: Math.max(investmentsBefore, 0), After: Math.max(investmentsAfter, 0) },
-        { name: 'Net Worth',   Before: Math.max(netWorthBefore, 0),    After: Math.max(netWorthAfter, 0) },
+        { name: 'Net Worth',   Before: netWorthBefore,    After: netWorthAfter },
     ];
 
     return (
@@ -62,7 +62,7 @@ export default function FinancialImpactBarChart({ savingsBefore, savingsAfter, i
                     <YAxis
                         stroke="var(--color-text-muted)"
                         tick={{ fontSize: 11, fill: 'var(--color-text-muted)', fontWeight: 600 }}
-                        tickFormatter={(v) => v === 0 ? '0' : `₹${(v / 100000).toFixed(1)}L`}
+                        tickFormatter={(v) => v === 0 ? '0' : (v < 0 ? `-₹${(Math.abs(v) / 100000).toFixed(1)}L` : `₹${(v / 100000).toFixed(1)}L`)}
                         axisLine={false}
                         tickLine={false}
                     />
@@ -74,21 +74,21 @@ export default function FinancialImpactBarChart({ savingsBefore, savingsAfter, i
                         iconType="circle"
                     />
 
-                    <Bar dataKey="Before" fill="url(#gradBefore)" radius={[8, 8, 8, 8]} maxBarSize={50}>
+                    <Bar dataKey="Before" fill="url(#gradBefore)" radius={[8, 8, 8, 8]} maxBarSize={50} minPointSize={2}>
                         <LabelList
                             dataKey="Before"
                             position="top"
-                            formatter={(val) => val > 0 ? (val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${(val / 1000).toFixed(0)}k`) : ''}
+                            formatter={(val) => val !== 0 ? (Math.abs(val) >= 100000 ? `${val < 0 ? '-' : ''}₹${(Math.abs(val) / 100000).toFixed(1)}L` : `${val < 0 ? '-' : ''}₹${(Math.abs(val) / 1000).toFixed(0)}k`) : ''}
                             style={{ fill: 'var(--color-text-secondary)', fontSize: 11, fontWeight: 800 }}
                             offset={10}
                         />
                     </Bar>
 
-                    <Bar dataKey="After" fill="url(#gradAfter)" radius={[8, 8, 8, 8]} maxBarSize={50}>
+                    <Bar dataKey="After" fill="url(#gradAfter)" radius={[8, 8, 8, 8]} maxBarSize={50} minPointSize={2}>
                         <LabelList
                             dataKey="After"
                             position="top"
-                            formatter={(val) => val > 0 ? (val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${(val / 1000).toFixed(0)}k`) : ''}
+                            formatter={(val) => val !== 0 ? (Math.abs(val) >= 100000 ? `${val < 0 ? '-' : ''}₹${(Math.abs(val) / 100000).toFixed(1)}L` : `${val < 0 ? '-' : ''}₹${(Math.abs(val) / 1000).toFixed(0)}k`) : ''}
                             style={{ fill: 'var(--color-text-secondary)', fontSize: 11, fontWeight: 800 }}
                             offset={10}
                         />

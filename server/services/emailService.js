@@ -1,29 +1,65 @@
-const { Resend } = require('resend');
-const { SMTP_EMAIL, CLIENT_URL } = require('../config/env');
+const https = require('https');
+const { CLIENT_URL, SMTP_EMAIL } = require('../config/env');
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
 
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
-
-if (resend) {
-    console.log('✅  Email service ready (Resend API)');
+if (BREVO_API_KEY) {
+    console.log('✅  Email service ready (Brevo API)');
 } else {
-    console.warn('⚠️  RESEND_API_KEY not set — reset emails will be logged to console only.');
+    console.warn('⚠️  BREVO_API_KEY not set — reset emails will be logged to console only.');
+}
+
+function sendBrevoEmail(to, subject, htmlContent) {
+    return new Promise((resolve, reject) => {
+        const body = JSON.stringify({
+            sender: { name: 'FinSim', email: SMTP_EMAIL || 'rahilkm15@gmail.com' },
+            to: [{ email: to }],
+            subject,
+            htmlContent,
+        });
+
+        const options = {
+            hostname: 'api.brevo.com',
+            path: '/v3/smtp/email',
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': BREVO_API_KEY,
+                'content-type': 'application/json',
+                'content-length': Buffer.byteLength(body),
+            },
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    resolve(data);
+                } else {
+                    reject(new Error(`Brevo API error ${res.statusCode}: ${data}`));
+                }
+            });
+        });
+
+        req.on('error', reject);
+        req.write(body);
+        req.end();
+    });
 }
 
 /**
- * Send a password reset email via Resend API.
- * Falls back to console logging if Resend is not configured.
+ * Send a password reset email via Brevo API.
+ * Falls back to console logging if Brevo is not configured.
  */
 async function sendResetEmail(toEmail, resetToken) {
     const resetUrl = `${CLIENT_URL}/reset-password?token=${resetToken}`;
 
-    if (resend) {
-        const { error } = await resend.emails.send({
-            from: 'FinSim <onboarding@resend.dev>',
-            to: toEmail,
-            subject: 'FinSim — Password Reset Request',
-            html: `
+    if (BREVO_API_KEY) {
+        await sendBrevoEmail(
+            toEmail,
+            'FinSim — Password Reset Request',
+            `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #0a0f1c; border: 1px solid #1e293b; border-radius: 16px; overflow: hidden;">
                     <div style="background: linear-gradient(135deg, #0e1726 0%, #0a0f1c 100%); padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid #1e293b;">
                         <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #22d3ee; letter-spacing: -0.5px;">FinSim</h1>
@@ -49,19 +85,12 @@ async function sendResetEmail(toEmail, resetToken) {
                         </p>
                     </div>
                 </div>
-            `,
-        });
-
-        if (error) {
-            console.error('❌  Resend email error:', error);
-            throw new Error(error.message);
-        }
-
+            `
+        );
         console.log(`📧  Password reset email sent to ${toEmail}`);
     } else {
-        // Fallback: log to console
         console.log('\n══════════════════════════════════════════════════');
-        console.log('📧  PASSWORD RESET LINK (Resend not configured — console fallback)');
+        console.log('📧  PASSWORD RESET LINK (Brevo not configured — console fallback)');
         console.log(`    To: ${toEmail}`);
         console.log(`    ${resetUrl}`);
         console.log('    Token expires in 15 minutes.');

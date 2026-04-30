@@ -23,4 +23,5 @@ module.exports = {
     SMTP_EMAIL: process.env.SMTP_EMAIL || '',
     SMTP_PASSWORD: process.env.SMTP_PASSWORD || '',
     RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+    BREVO_API_KEY: process.env.BREVO_API_KEY || '',
 };
