@@ -88,6 +88,7 @@ async function sendResetEmail(toEmail, resetToken) {
             `
         );
         console.log(`📧  Password reset email sent to ${toEmail}`);
+        console.log(`🔗  RESET LINK: ${resetUrl}`);
     } else {
         console.log('\n══════════════════════════════════════════════════');
         console.log('📧  PASSWORD RESET LINK (Brevo not configured — console fallback)');
