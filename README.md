@@ -1,4 +1,4 @@
-[finsim readme.md](https://github.com/user-attachments/files/33212867/finsim.readme.md)
+
 # FinSim — Financial Shock & Decision Simulator
 
 A full-stack personal finance simulation platform that lets you stress-test your financial situation against real-world scenarios before they happen. Built with the MERN stack.
